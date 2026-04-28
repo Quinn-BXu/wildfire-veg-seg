@@ -1,0 +1,35 @@
+# U-Net on the 7-channel wildfire-oriented feature stack, pooled across
+# Bay Area + Napa + Sonoma training chips. Lake County South remains fully
+# held out for final external transfer testing.
+experiment_name: unet_woody_baynapasonoma
+
+data:
+  chip_dir: data/processed/bay_napa_sonoma_woody
+  band_indices: [0, 1, 2, 3, 4, 5, 6]
+  prescaled: true
+  task: woody
+  chip_size: 256
+  batch_size: 16
+  num_workers: 4
+  val_fraction: 0.15
+  test_fraction: 0.15
+  seed: 42
+
+model:
+  name: unet
+  encoder_name: resnet50
+  encoder_weights: imagenet
+  in_channels: 7
+  num_classes: 2
+
+training:
+  max_epochs: 40
+  lr: 1.0e-3
+  weight_decay: 1.0e-4
+  precision: "16-mixed"
+  accelerator: auto
+  class_weights: [0.5, 1.5]
+
+logging:
+  save_dir: outputs/unet_woody_baynapasonoma
+  log_every_n_steps: 20

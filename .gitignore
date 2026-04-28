@@ -1,0 +1,39 @@
+# Data + artifacts
+data/raw/
+data/processed/
+checkpoints/
+outputs/
+*.tif
+*.tiff
+*.nc
+*.zarr/
+*.parquet
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+*.egg-info/
+
+# Editors
+.vscode/
+.idea/
+.DS_Store
+
+# Logs
+lightning_logs/
+wandb/
+mlruns/
+*.log
+
+# Secrets
+.env
+*.key
+credentials.json
+
+# Archived experiments not part of the public portfolio
+trial_error/
+scripts/render_preview_maps.py

@@ -1,0 +1,45 @@
+# Core DL
+torch>=2.2
+torchvision>=0.17
+pytorch-lightning>=2.2
+segmentation-models-pytorch>=0.3.4
+timm>=0.9.12
+
+# Geospatial
+rasterio>=1.3
+rioxarray>=0.15
+xarray>=2024.1
+geopandas>=0.14
+shapely>=2.0
+pyproj>=3.6
+affine>=2.4
+
+# STAC + cloud data access
+pystac-client>=0.7
+planetary-computer>=1.0
+stackstac>=0.5
+earthengine-api>=0.1.400
+
+# Training utilities
+numpy>=1.26
+pandas>=2.1
+scikit-learn>=1.4
+scipy>=1.11                # distance transform for power-line raster
+albumentations>=1.4
+tqdm
+pyyaml
+omegaconf>=2.3
+
+# Geo features: OSM access for power lines
+requests>=2.31
+
+# Eval + viz
+matplotlib
+seaborn
+folium
+tensorboard
+
+# Foundation model fine-tuning (optional, add later)
+# transformers>=4.40
+# accelerate>=0.29
+# huggingface-hub>=0.22
