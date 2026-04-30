@@ -89,7 +89,37 @@ More detailed metrics are recorded in `results.md`. Older ablations and intermed
 
 Dynamic World already ships a woody class. A fair portfolio has to answer the question: *does training a model actually buy anything over piping the DW labels straight into `build_risk_layer.py`?*
 
-We answer it honestly with a no-model baseline (`scripts/dw_direct_woody.py`) that binarizes DW labels → `woody_prob_dw.tif`, feeds that through the same GIS risk step, and compares the two pipelines with `scripts/compare_woody.py`. Expected wins for the trained model: (1) cleaner canopy edges (DW is 10 m categorical, the CNN smooths), (2) works on scenes with cloud gaps where DW has no label, (3) transfers to sensors or time periods DW doesn't cover (Landsat archives before 2015, NAIP 1 m, commercial feeds). If the model *doesn't* beat DW-direct on held-out tiles, that's a useful negative result — and still the right discussion to have at interview.
+We answer it honestly with a no-model baseline (`scripts/dw_direct_woody.py`) that binarizes DW labels → `woody_prob_dw.tif`, feeds that through the same GIS risk step, and compares the two pipelines with `scripts/compare_woody.py`.
+
+**What this run actually demonstrates.**
+
+- Both pipelines run end-to-end on the same AOIs and produce comparable rasters with measurable agreement, IoU, coverage, and edge-disagreement statistics.
+- The architecture cleanly separates the "what is this pixel?" question (model) from the "how should we act on it?" question (deterministic GIS rules) — which is the property a utility-side workflow needs.
+- A continuous probability output (vs. DW's categorical hard label) gives downstream tooling a tunable threshold for triage vs. action.
+
+**What this run does *not* claim.**
+
+- It does not claim to beat Dynamic World on Dynamic World's native task. DW was trained on a far larger expert-labeled corpus with a deeper input stack (10+ S2 bands including red-edge and SWIR). A model supervised on DW outputs is, in expectation, bounded by DW's accuracy on DW's taxonomy.
+- It does not transfer to other sensors. The model expects exactly 4 S2 bands (B02, B03, B04, B08) plus NDVI and seasonal-phase channels. Running it on Landsat, NAIP, or commercial feeds would require retraining from scratch.
+- It does not fill DW's cloud gaps. S2 cloud gaps are DW's gaps; the model takes S2 imagery as input and has no separate compositing step.
+- It does not distinguish species, age, or fuel state from spectral signal alone — those are below what 10 m single-date S2 carries.
+
+**Why train at all, then.**
+
+The defensible reason is not "build a better land-cover classifier." It is that a wildfire-mitigation taxonomy is not Dynamic World's:
+
+- Ignition risk depends on species, fuel state (dry chaparral vs irrigated landscaping), structure (tall narrow crown vs spreading canopy vs short shrub), and recent burn history. DW exposes none of these directly.
+- Most of those distinctions are not spectral. Dry chaparral and irrigated landscaping look similar in single-date imagery but separate cleanly in multi-temporal SWIR (NDMI). Tall narrow eucalyptus stands and oak woodland look spectrally similar at 10 m but are structurally distinct in LiDAR canopy height.
+- DW's frozen weights cannot ingest those signals. A trainable pipeline can.
+
+The repo is structured so the input stack and the label source are swappable components. The current run uses DW labels with a 4-band S2 + NDVI + seasonal-phase input as a baseline. The natural extensions, in roughly increasing payoff order:
+
+1. **Multi-temporal S2** (12-month NDVI / NDMI / NBR stacks) — separates dry chaparral from irrigated cover, captures phenology, near-zero additional infrastructure cost.
+2. **LiDAR canopy height** — adds vegetation structure, the signal needed for crown-shape and height-class distinctions. CAL FIRE and utility-corridor LiDAR exist for much of California.
+3. **CALVEG and LANDFIRE FBFM40 as additional input bands** — California-specific priors on vegetation type and fire-behavior fuel models that already encode utility-relevant distinctions.
+4. **Crew-validated inspection labels in place of DW** — once the input stack carries the right signal, a few hundred labeled tiles meaningfully outperform DW on the slice of the problem that matters: vegetation immediately adjacent to distribution lines.
+
+If the model doesn't beat DW-direct on the current weak-label task, that is the expected result for a student trained on a stronger teacher's outputs. The portfolio value here is the architecture and the methodology, not the headline IoU.
 
 ## Repo structure
 
