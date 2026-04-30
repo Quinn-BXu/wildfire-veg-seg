@@ -87,7 +87,7 @@ More detailed metrics are recorded in `results.md`. Older ablations and intermed
 
 ### DW-direct baseline
 
-Dynamic World already ships a woody class. A fair portfolio has to answer the question: *does training a model actually buy anything over piping the DW labels straight into `build_risk_layer.py`?*
+Dynamic World already provides tree and shrub/scrub classes that can be combined into a woody-vegetation proxy. A fair portfolio has to answer the question: *does training a model actually buy anything over piping those DW labels straight into `build_risk_layer.py`?*
 
 We answer it honestly with a no-model baseline (`scripts/dw_direct_woody.py`) that binarizes DW labels → `woody_prob_dw.tif`, feeds that through the same GIS risk step, and compares the two pipelines with `scripts/compare_woody.py`.
 
@@ -95,11 +95,11 @@ We answer it honestly with a no-model baseline (`scripts/dw_direct_woody.py`) th
 
 - Both pipelines run end-to-end on the same AOIs and produce comparable rasters with measurable agreement, IoU, coverage, and edge-disagreement statistics.
 - The architecture cleanly separates the "what is this pixel?" question (model) from the "how should we act on it?" question (deterministic GIS rules) — which is the property a utility-side workflow needs.
-- A continuous probability output (vs. DW's categorical hard label) gives downstream tooling a tunable threshold for triage vs. action.
+- A continuous model output (vs. DW's categorical hard label) gives downstream tooling a tunable triage threshold, although calibration would require independent validation data.
 
 **What this run does *not* claim.**
 
-- It does not claim to beat Dynamic World on Dynamic World's native task. DW was trained on a far larger expert-labeled corpus with a deeper input stack (10+ S2 bands including red-edge and SWIR). A model supervised on DW outputs is, in expectation, bounded by DW's accuracy on DW's taxonomy.
+- It does not claim to beat Dynamic World on Dynamic World's native task. DW was trained on a far larger expert-labeled corpus with a deeper input stack (10+ S2 bands including red-edge and SWIR). Because the current model is supervised on DW-derived weak labels, it should not be interpreted as outperforming DW as a land-cover classifier without independent validation labels.
 - It does not transfer to other sensors. The model expects exactly 4 S2 bands (B02, B03, B04, B08) plus NDVI and seasonal-phase channels. Running it on Landsat, NAIP, or commercial feeds would require retraining from scratch.
 - It does not fill DW's cloud gaps. S2 cloud gaps are DW's gaps; the model takes S2 imagery as input and has no separate compositing step.
 - It does not distinguish species, age, or fuel state from spectral signal alone — those are below what 10 m single-date S2 carries.
@@ -109,7 +109,7 @@ We answer it honestly with a no-model baseline (`scripts/dw_direct_woody.py`) th
 The defensible reason is not "build a better land-cover classifier." It is that a wildfire-mitigation taxonomy is not Dynamic World's:
 
 - Ignition risk depends on species, fuel state (dry chaparral vs irrigated landscaping), structure (tall narrow crown vs spreading canopy vs short shrub), and recent burn history. DW exposes none of these directly.
-- Most of those distinctions are not spectral. Dry chaparral and irrigated landscaping look similar in single-date imagery but separate cleanly in multi-temporal SWIR (NDMI). Tall narrow eucalyptus stands and oak woodland look spectrally similar at 10 m but are structurally distinct in LiDAR canopy height.
+- Many of those distinctions are not recoverable from single-date 10 m Sentinel-2 imagery alone. Dry chaparral and irrigated landscaping look similar at one time point but separate cleanly in multi-temporal SWIR (NDMI). Tall narrow eucalyptus stands and oak woodland look spectrally similar at 10 m but are structurally distinct in LiDAR canopy height.
 - DW's frozen weights cannot ingest those signals. A trainable pipeline can.
 
 The repo is structured so the input stack and the label source are swappable components. The current run uses DW labels with a 4-band S2 + NDVI + seasonal-phase input as a baseline. The natural extensions, in roughly increasing payoff order:
